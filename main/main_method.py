@@ -13,7 +13,7 @@ def vkm(id, m):
 
 
 session = requests.Session()
-vk_session = vk_api.VkApi(token='token')
+vk_session = vk_api.VkApi(token='c4a58f35447ae89db4fd8fc3641ee232e3f7e873c7f757c2e8c64ad73e174af383caebd11431bba5b1761')
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 p = {331413122,390240650,255803794,157378837,390427933,571974303,328580258,159128874,324686641,255211317,320778806,246786232,432477120,541289155,427135812,169037518,249437012,237653092,267936374,259752570,240155903}
@@ -55,10 +55,10 @@ try:
                     try:
                         vkm(i, mes)
                     except:
-                        m = 'Косяк с @' + i
+                        m = 'Косяк с @' + str(i)
                         vkm(159128874, m)
                         print(m)
-                        p -= i
+                        p -= set(str(i))
                     print('Рассылка для', i, 'true')
             else:
                 vkm(id, text)
