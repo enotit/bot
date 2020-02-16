@@ -12,8 +12,24 @@ def vkm(id, m):
     )
 
 
+'''
+How look ignor.txt:
+[token]
+[chief admin]
+[all admins]
+'''
+
+with open("ignor.txt", "r") as file:
+    tok = str(file.readline())[:-1]
+    print(tok)
+    HeadAdmin = int(file.readline())
+    print(HeadAdmin)
+    Admins = str(file.readline())
+    print(Admins)
+file.close()
+
 session = requests.Session()
-vk_session = vk_api.VkApi(token='c4a58f35447ae89db4fd8fc3641ee232e3f7e873c7f757c2e8c64ad73e174af383caebd11431bba5b1761')
+vk_session = vk_api.VkApi(token=tok)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 BDfi = open('miniBD.txt', 'r')
@@ -26,8 +42,9 @@ BDfi.close()
 prod = 0    # work happy
 cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~'}
 ignor_list = set()
-adm = (159128874, 246786232, 249437012, 577978154)
-vkm(159128874, 'Жив')
+time_list = [int(_) for _ in Admins.split(',')]
+adm = set(time_list)
+vkm(HeadAdmin, 'Жив')
 
 try:
     print('True')
@@ -61,7 +78,7 @@ try:
                 vkm(id, 'Ваш запрос отправлен, ожидайте. Администратор свяжется с Вами в ближайшее время :)')
             elif id == 287826084:
                 m = text + ' : Alina'
-                vkm(159128874, m)
+                vkm(HeadAdmin, m)
                 vkm(id, text)
             elif id in adm and text == 'fp':
                 s = list()
@@ -87,7 +104,7 @@ try:
                         vkm(i, mes)
                     except:
                         m = 'Косяк с @id' + str(i)
-                        vkm(159128874, m)
+                        vkm(HeadAdmin, m)
                         print(m)
                         p -= set(str(i))
                     print('Рассылка для', i, 'true')
@@ -97,11 +114,11 @@ try:
 except:
     print('End work')
     m = 'Не жив, запросов: ' + str(prod)
-    vkm(159128874, m)
+    vkm(HeadAdmin, m)
     s = ''
     for i in p:
         s = str(s + i + ",")
     BDfi = open('miniBD.txt', 'w')
     BDfi.write(s[:-1])
     BDfi.close()
-    vkm(159128874, s)
+    vkm(HeadAdmin, s)
