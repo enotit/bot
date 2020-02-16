@@ -16,7 +16,10 @@ def vkm(id, m):
 How look ignor.txt:
 [token]
 [chief admin]
-[all admins]
+[all admins THROUGH ',']
+
+How look miniBD.txt:
+[all users THROUGH ',']
 '''
 
 with open("ignor.txt", "r") as file:
