@@ -1,6 +1,16 @@
 import vk_api
 import requests
 from vk_api.longpoll import VkLongPoll, VkEventType
+from datetime import datetime
+
+
+def pr(s):
+    print('-' * 5, s, '-'*5)
+
+
+def ti():
+    now = datetime.strftime(datetime.now(), "%Y.%m.%d %H:%M:%S")
+    return str(f'[{now}]')
 
 
 def vkm(id, m):
@@ -17,40 +27,35 @@ How look ignor.txt:
 [token]
 [chief admin]
 [all admins THROUGH ',']
-
-How look miniBD.txt:
-[all users THROUGH ',']
+[all users THROUGH ',', min 2 users]
 '''
 
+pr('START')
 with open("ignor.txt", "r") as file:
     tok = str(file.readline())[:-1]
-    print(tok)
+    print(ti(), 'Token:', tok)
     HeadAdmin = int(file.readline())
-    print(HeadAdmin)
+    print(ti(), 'Main admin:', HeadAdmin)
     Admins = str(file.readline())
-    print(Admins)
+    print(ti(), 'All admins team:', Admins, end='')
+    users = set(str(file.readline()).split(','))
+    print(ti(), 'All connect users:', users)
 file.close()
 
+print('>> connect - ', ti())
 session = requests.Session()
 vk_session = vk_api.VkApi(token=tok)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
-BDfi = open('miniBD.txt', 'r')
-BD = BDfi.read()
-
-print('Start module. List: ', BD)
-p = set(BD.split(','))
-BDfi.close()
-
 prod = 0    # work happy
 cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~'}
 ignor_list = set()
 time_list = [int(_) for _ in Admins.split(',')]
 adm = set(time_list)
 vkm(HeadAdmin, 'Жив')
-
 try:
-    print('True')
+    print(ti(), 'Bot in work by mn1v')
+    pr('LOG')
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.text and event.text.lower() == 'cmd' \
                 and event.user_id in adm:
@@ -70,58 +75,60 @@ try:
                 vkm(event.user_id, 'Начался диалог с администратором. По завершению дублёр вернётся.')
         if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
             prod += 1
-            print(event.user_id, event.text)
+            print(ti(), event.user_id, event.text)
             text = event.text
             id = event.user_id
-            p.add(str(id))
+            users.add(str(id))
             if text[0] == '!':
-                m = 'Запрос:\n' + text[1:] + ' : @id' + str(id)
+                if str(id) in ignor_list:
+                    m = 'Бан - Запрос:\n' + text[1:] + ' : @id' + str(id)
+                else:
+                    m = 'Запрос:\n' + text[1:] + ' : @id' + str(id)
                 for i in adm:
                     vkm(i, m)
                 vkm(id, 'Ваш запрос отправлен, ожидайте. Администратор свяжется с Вами в ближайшее время :)')
-            elif id == 287826084:
-                m = text + ' : Alina'
-                vkm(HeadAdmin, m)
-                vkm(id, text)
             elif id in adm and text == 'fp':
                 s = list()
-                for i in p:
+                for i in users:
                     s.append(i)
                 vkm(id, s)
             elif id in adm and text[0:2] == 'b~':
-                idb = text[2:text.index('/')]
-                ignor_list.add(idb)
+                id_ban = text[2:text.index('/')]
+                ignor_list.add(id_ban)
+                print(ti(), id_ban, "- заблокирован, - ", id)
                 ds = 'Вас заблокировали по причине: ' + text[text.index('/') + 1:] + '\n До следующего обновления ' \
                                                                                      'системы. '
-                sogl = '@id' + idb + ' , успешно заблокирован!'
+                sogl = '@id' + id_ban + ' , успешно заблокирован!'
                 try:
-                    vkm(idb, ds)
+                    vkm(id_ban, ds)
                     vkm(id, sogl)
                 except:
                     vkm(id, 'Ошибочка')
             elif int(id) in adm and text[0:2] == 'R~':
                 mes = text[2:] + '\n\n*Получили сообщение, потому что разрешили писать вам. Обещаем писать не часто.'
-                print(p)
-                for i in p:
+                print(ti(), users)
+                for i in users:
                     try:
                         vkm(i, mes)
                     except:
                         m = 'Косяк с @id' + str(i)
                         vkm(HeadAdmin, m)
-                        print(m)
-                        p -= set(str(i))
-                    print('Рассылка для', i, 'true')
+                        print(ti(), m)
+                        users -= set(str(i))
+                    print(ti(), 'Рассылка для', i, 'true')
             else:
                 if str(id) not in ignor_list and text not in cmdes:
                     vkm(id, text)
 except:
-    print('End work')
+    pr('END')
     m = 'Не жив, запросов: ' + str(prod)
     vkm(HeadAdmin, m)
     s = ''
-    for i in p:
+    for i in users:
         s = str(s + i + ",")
-    BDfi = open('miniBD.txt', 'w')
-    BDfi.write(s[:-1])
-    BDfi.close()
+    final_text = str(f'{tok}\n{HeadAdmin}\n{Admins[:-1]}\n{s[:-1]}')
+    print(ti(), final_text)
+    with open("ignor.txt", "w") as file:
+        file.write(final_text)
     vkm(HeadAdmin, s)
+pr('------')
