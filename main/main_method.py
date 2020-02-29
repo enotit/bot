@@ -1,6 +1,10 @@
+import random
+
 import vk_api
 import requests
+import traceback
 from vk_api.longpoll import VkLongPoll, VkEventType
+from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from datetime import datetime
 
 
@@ -48,7 +52,7 @@ vk_session = vk_api.VkApi(token=tok)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
 prod = 0    # work happy
-cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~'}
+cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~', 'Список команд'}
 ignor_list = set()
 time_list = [int(_) for _ in Admins.split(',')]
 adm = set(time_list)
@@ -57,7 +61,8 @@ try:
     print(ti(), 'Bot in work by mn1v')
     pr('LOG')
     for event in longpoll.listen():
-        if event.type == VkEventType.MESSAGE_NEW and event.text and event.text.lower() == 'cmd' \
+        if event.type == VkEventType.MESSAGE_NEW and event.text and \
+                (event.text.lower() == 'cmd' or event.text.lower() == 'список команд')\
                 and event.user_id in adm:
             tsh = 'Команды Администратора из Личных Сообщений: \n <fp> - список всех пользователей \n <R~[text]> - ' \
                   'рассылка пользователям. Запрещена для использования!\n' \
@@ -65,7 +70,17 @@ try:
                   'Команды с ЛС пользователя:\n' \
                   '<ad> - добавление в игнор лист(дублёр не работает, для диалогов)\n' \
                   '<ex> - вытаскивание из игнор листа(бан/диалог)'
-            vkm(event.user_id, tsh)
+            keyboard = VkKeyboard(one_time=False)
+            keyboard.add_button('Список команд', color=VkKeyboardColor.PRIMARY)
+            keyboard.add_button('Список участников', color=VkKeyboardColor.PRIMARY)
+            print(keyboard.get_keyboard())
+            vk.messages.send(
+                peer_id=0,
+                user_id=event.user_id,
+                random_id=random.randint(-2147483648, +2147483648),
+                keyboard=keyboard.get_keyboard(),
+                message=tsh
+            )
         if event.from_me:
             if event.text == 'ex':
                 ignor_list.discard(str(event.user_id))
@@ -80,17 +95,20 @@ try:
             id = event.user_id
             users.add(str(id))
             if text[0] == '!':
-                if str(id) in ignor_list:
-                    m = 'Бан - Запрос:\n' + text[1:] + ' : @id' + str(id)
+                if len(text[1:]) > 6:
+                    if str(id) in ignor_list:
+                        m = 'Бан - Запрос:\n' + text[1:] + ' : @id' + str(id)
+                    else:
+                        m = 'Запрос:\n' + text[1:] + ' : @id' + str(id)
+                    for i in adm:
+                        vkm(i, m)
+                    vkm(id, 'Ваш запрос отправлен, ожидайте. Администратор свяжется с Вами в ближайшее время :)')
                 else:
-                    m = 'Запрос:\n' + text[1:] + ' : @id' + str(id)
-                for i in adm:
-                    vkm(i, m)
-                vkm(id, 'Ваш запрос отправлен, ожидайте. Администратор свяжется с Вами в ближайшее время :)')
-            elif id in adm and text == 'fp':
+                    vkm(id, '⚠ Ваш запрос отменён.')
+            elif id in adm and (text == 'fp' or text == 'Список участников'):
                 s = list()
                 for i in users:
-                    s.append(i)
+                    s.append('@id' + i)
                 vkm(id, s)
             elif id in adm and text[0:2] == 'b~':
                 id_ban = text[2:text.index('/')]
@@ -113,7 +131,7 @@ try:
                     except:
                         m = 'Косяк с @id' + str(i)
                         vkm(HeadAdmin, m)
-                        print(ti(), m)
+                        print(m)
                         users -= set(str(i))
                     print(ti(), 'Рассылка для', i, 'true')
             else:
@@ -121,7 +139,7 @@ try:
                     vkm(id, text)
 except:
     pr('END')
-    m = 'Не жив, запросов: ' + str(prod)
+    m = f'{traceback.format_exc()}: ' + str(prod)
     vkm(HeadAdmin, m)
     s = ''
     for i in users:
