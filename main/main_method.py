@@ -9,7 +9,7 @@ from datetime import datetime
 
 
 def pr(s):
-    print('-' * 5, s, '-'*5)
+    print('-' * 5, s, '-' * 5)
 
 
 def ti():
@@ -51,18 +51,27 @@ session = requests.Session()
 vk_session = vk_api.VkApi(token=tok)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
-prod = 0    # work happy
+prod = 0  # work happy
 cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~', 'Список команд'}
 ignor_list = set()
 time_list = [int(_) for _ in Admins.split(',')]
 adm = set(time_list)
+rasp = {'Понедельник': 'окно\nэкономика\n анг/нем\nправо\nинформатика\nистория\nнемецкий',
+        'Вторник': 'нем\nанг/нем\nистория\nрусский\nлитра\nматематика,',
+        'Среда': 'физра\nправо\noбж\nлитра\nрусский\nнемецкий',
+        'Четверг': 'экономика\nобщество\nиуп\nистория\nматематика\nбиология\nгеография\nрусский',
+        'Пятница': 'нем\nфизра\nфизика\nанг/нем\nматем\nматем\nлитра',
+        'Суббота': 'химия\nфизика\nфизра\nастрономия',
+        'Расписание': '1 - 8:30 - 9:10\n2 - 9:20 - 10:00\n3 - 10:20 - 11:00\n4 - 11:20 - 12:00\n5 - 12:20 - '
+                       '13:00\n6 - 13:10 - 13:50\n7 - 14:00 - 14:40\n8 - 14:45 - 15:25'}
+raspi = [i[0] for i in list(rasp.items())]
 vkm(HeadAdmin, 'Жив')
 try:
     print(ti(), 'Bot in work by mn1v')
     pr('LOG')
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.text and \
-                (event.text.lower() == 'cmd' or event.text.lower() == 'список команд')\
+                (event.text.lower() == 'cmd' or event.text.lower() == 'список команд') \
                 and event.user_id in adm:
             tsh = 'Команды Администратора из Личных Сообщений: \n <fp> - список всех пользователей \n <R~[text]> - ' \
                   'рассылка пользователям. Запрещена для использования!\n' \
@@ -122,6 +131,23 @@ try:
                     vkm(id, sogl)
                 except:
                     vkm(id, 'Ошибочка')
+            elif text == 'расп':
+                keyboard = VkKeyboard(one_time=False)
+                p = False
+                for i in raspi:
+                    keyboard.add_button(str(i), color=VkKeyboardColor.PRIMARY)
+                    if p:
+                        keyboard.add_line()
+                    p = not p
+                vk.messages.send(
+                    peer_id=0,
+                    user_id=event.user_id,
+                    random_id=random.randint(-2147483648, +2147483648),
+                    keyboard=keyboard.get_keyboard(),
+                    message='Лови кнопки.'
+                )
+            elif text in raspi:
+                vkm(id, str(f'Расписание на {text}:\n{rasp[text]}'))
             elif int(id) in adm and text[0:2] == 'R~':
                 mes = text[2:] + '\n\n*Получили сообщение, потому что разрешили писать вам. Обещаем писать не часто.'
                 print(ti(), users)
