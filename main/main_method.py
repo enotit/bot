@@ -1,15 +1,15 @@
 import random
+from datetime import datetime
 
-import vk_api
 import requests
 import traceback
-from vk_api.longpoll import VkLongPoll, VkEventType
+import vk_api
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-from datetime import datetime
+from vk_api.longpoll import VkLongPoll, VkEventType
 
 
 def pr(s):
-    print('-' * 5, s, '-'*5)
+    print('-' * 5, s, '-' * 5)
 
 
 def ti():
@@ -17,10 +17,24 @@ def ti():
     return str(f'[{now}]')
 
 
+def user_id_vk(id):
+    user = (vk_session.method("users.get", {"user_ids": id}))
+    fullname = user[0]['first_name'] + ' ' + user[0]['last_name']
+    return fullname
+
+
+def name_user(id):
+    return (user_id_vk(id)).split()[0]
+
+
+def second_name_user(id):
+    return (user_id_vk(id)).split()[1]
+
+
 def vkm(id, m):
     vk.messages.send(
         user_id=id,
-        random_id=0,
+        random_id=random.randint(-2147483648, +2147483648),
         attachments=0,
         message=m
     )
@@ -37,32 +51,31 @@ How look ignor.txt:
 pr('START')
 with open("ignor.txt", "r") as file:
     tok = str(file.readline())[:-1]
-    print(ti(), 'Token:', tok)
     HeadAdmin = int(file.readline())
-    print(ti(), 'Main admin:', HeadAdmin)
     Admins = str(file.readline())
-    print(ti(), 'All admins team:', Admins, end='')
     users = set(str(file.readline()).split(','))
-    print(ti(), 'All connect users:', users)
-file.close()
 
+print(ti(), ' All connect users: ', users, '\n',
+      ti(), ' All admins team: ', Admins[:-1], '\n',
+      ti(), ' Main admin: ', HeadAdmin, '\n',
+      ti(), ' Token: ', tok, '\n', sep='', end='')
 print('>> connect - ', ti())
 session = requests.Session()
 vk_session = vk_api.VkApi(token=tok)
 longpoll = VkLongPoll(vk_session)
 vk = vk_session.get_api()
-prod = 0    # work happy
+prod = 0  # work happy
 cmdes = {'cmd', 'fp', 'ad', 'ex', 'b~', 'R~', 'Список команд'}
 ignor_list = set()
 time_list = [int(_) for _ in Admins.split(',')]
 adm = set(time_list)
-vkm(HeadAdmin, 'Жив')
+vkm(HeadAdmin, f'{ti()} {name_user(HeadAdmin)}, я работаю!')
 try:
     print(ti(), 'Bot in work by mn1v')
     pr('LOG')
     for event in longpoll.listen():
         if event.type == VkEventType.MESSAGE_NEW and event.text and \
-                (event.text.lower() == 'cmd' or event.text.lower() == 'список команд')\
+                (event.text.lower() == 'cmd' or event.text.lower() == 'список команд') \
                 and event.user_id in adm:
             tsh = 'Команды Администратора из Личных Сообщений: \n <fp> - список всех пользователей \n <R~[text]> - ' \
                   'рассылка пользователям. Запрещена для использования!\n' \
@@ -96,20 +109,21 @@ try:
             users.add(str(id))
             if text[0] == '!':
                 if len(text[1:]) > 6:
+                    m = f'Запрос от [id{id}|{user_id_vk(id)}], id: {id}:\n{text[1:]}'
                     if str(id) in ignor_list:
-                        m = 'Бан - Запрос:\n' + text[1:] + ' : @id' + str(id)
-                    else:
-                        m = 'Запрос:\n' + text[1:] + ' : @id' + str(id)
+                        m = 'Бан - ' + m
                     for i in adm:
                         vkm(i, m)
                     vkm(id, 'Ваш запрос отправлен, ожидайте. Администратор свяжется с Вами в ближайшее время :)')
                 else:
-                    vkm(id, '⚠ Ваш запрос отменён.')
+                    vkm(id, '⚠ Ваш запрос отменён. Символов < 6')
             elif id in adm and (text == 'fp' or text == 'Список участников'):
                 s = list()
                 for i in users:
-                    s.append('@id' + i)
+                    s.append(f' [id{i}|{user_id_vk(i)}]: {i}')
                 vkm(id, s)
+            elif id in adm and text.lower() == 'kill':
+                re = 1 / 0
             elif id in adm and text[0:2] == 'b~':
                 id_ban = text[2:text.index('/')]
                 ignor_list.add(id_ban)
